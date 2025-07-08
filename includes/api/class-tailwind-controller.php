@@ -42,12 +42,12 @@ class ShadowPlugin_Tailwind_Controller {
         try {
             // Look for compiled CSS in common Tailwind output locations
             $possible_paths = [
-                PLUGIN_BOILERPLATE_DIR . 'dist/css/main.css',
-                PLUGIN_BOILERPLATE_DIR . 'dist/main.css',
-                PLUGIN_BOILERPLATE_DIR . 'dist/styles.css',
-                PLUGIN_BOILERPLATE_DIR . 'dist/tailwind.css',
-                PLUGIN_BOILERPLATE_DIR . 'src/styles/main.css',
-                PLUGIN_BOILERPLATE_DIR . 'build/css/main.css'
+                GUTENBERG_INLINE_DIR . 'dist/css/main.css',
+                GUTENBERG_INLINE_DIR . 'dist/main.css',
+                GUTENBERG_INLINE_DIR . 'dist/styles.css',
+                GUTENBERG_INLINE_DIR . 'dist/tailwind.css',
+                GUTENBERG_INLINE_DIR . 'src/styles/main.css',
+                GUTENBERG_INLINE_DIR . 'build/css/main.css'
             ];
             
             $css_content = '';
@@ -135,11 +135,11 @@ class ShadowPlugin_Tailwind_Controller {
      */
     public function get_css_modification_time() {
         $possible_paths = [
-            PLUGIN_BOILERPLATE_DIR . 'dist/css/main.css',
-            PLUGIN_BOILERPLATE_DIR . 'dist/main.css',
-            PLUGIN_BOILERPLATE_DIR . 'dist/styles.css',
-            PLUGIN_BOILERPLATE_DIR . 'dist/tailwind.css',
-            PLUGIN_BOILERPLATE_DIR . 'src/styles/main.css'
+            GUTENBERG_INLINE_DIR . 'dist/css/main.css',
+            GUTENBERG_INLINE_DIR . 'dist/main.css',
+            GUTENBERG_INLINE_DIR . 'dist/styles.css',
+            GUTENBERG_INLINE_DIR . 'dist/tailwind.css',
+            GUTENBERG_INLINE_DIR . 'src/styles/main.css'
         ];
         
         foreach ($possible_paths as $path) {
@@ -158,11 +158,11 @@ class ShadowPlugin_Tailwind_Controller {
      */
     public function css_file_exists() {
         $possible_paths = [
-            PLUGIN_BOILERPLATE_DIR . 'dist/css/main.css',
-            PLUGIN_BOILERPLATE_DIR . 'dist/main.css',
-            PLUGIN_BOILERPLATE_DIR . 'dist/styles.css',
-            PLUGIN_BOILERPLATE_DIR . 'dist/tailwind.css',
-            PLUGIN_BOILERPLATE_DIR . 'src/styles/main.css'
+            GUTENBERG_INLINE_DIR . 'dist/css/main.css',
+            GUTENBERG_INLINE_DIR . 'dist/main.css',
+            GUTENBERG_INLINE_DIR . 'dist/styles.css',
+            GUTENBERG_INLINE_DIR . 'dist/tailwind.css',
+            GUTENBERG_INLINE_DIR . 'src/styles/main.css'
         ];
         
         foreach ($possible_paths as $path) {

@@ -271,7 +271,7 @@ class ShadowPlugin {
             <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
             <div id="shadow-plugin-admin-root">
                 <!-- Example of passing server data to React component via attributes -->
-                <plugin-boilerplate 
+                <gutenberg-inline 
                     user-role="<?php echo esc_attr($user_role); ?>"
                     site-url="<?php echo esc_attr(home_url()); ?>"
                     user-id="<?php echo esc_attr($current_user->ID); ?>"
@@ -283,7 +283,7 @@ class ShadowPlugin {
                     <?php if (!empty($tailwind_css)) : ?>
                     tailwind-css="<?php echo base64_encode($tailwind_css); ?>"
                     <?php endif; ?>
-                ></plugin-boilerplate>
+                ></gutenberg-inline>
             </div>
         </div>
         <?php
@@ -353,8 +353,8 @@ class ShadowPlugin {
                 // Auto-create shadow plugin panel with server data
                 document.addEventListener('DOMContentLoaded', function() {
                     // Only add if not already present
-                    if (!document.querySelector('plugin-boilerplate')) {
-                        const panel = document.createElement('plugin-boilerplate');
+                    if (!document.querySelector('gutenberg-inline')) {
+                        const panel = document.createElement('gutenberg-inline');
                         
                         // Set attributes with server data
                         panel.setAttribute('user-role', '<?php echo esc_js($user_role); ?>');
@@ -394,8 +394,8 @@ class ShadowPlugin {
                 // Auto-create shadow plugin panel with server data
                 document.addEventListener('DOMContentLoaded', function() {
                     // Only add if not already present
-                    if (!document.querySelector('plugin-boilerplate')) {
-                        const panel = document.createElement('plugin-boilerplate');
+                    if (!document.querySelector('gutenberg-inline')) {
+                        const panel = document.createElement('gutenberg-inline');
                         
                         // Set attributes with server data
                         panel.setAttribute('user-role', '<?php echo esc_js($user_role); ?>');

@@ -66,7 +66,7 @@ class PluginBoilerplateElement extends HTMLElement {
 }
 
 // Register the web component
-customElements.define('plugin-boilerplate', PluginBoilerplateElement);
+customElements.define('gutenberg-inline', PluginBoilerplateElement);
 
 // Export for global access
 window.ShadowPlugin = {
