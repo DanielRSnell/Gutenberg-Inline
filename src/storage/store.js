@@ -12,6 +12,9 @@ export const useStore = create(
       isPanelOpen: false,
       panelPosition: 'right', // 'left', 'right', 'center'
       
+      // Sidebar state
+      isSidebarCollapsed: true,
+      
       // Search and command state
       searchQuery: '',
       selectedCommandIndex: 0,
@@ -39,6 +42,10 @@ export const useStore = create(
       closePanel: () => set({ isPanelOpen: false }),
       
       setPanelPosition: (position) => set({ panelPosition: position }),
+      
+      toggleSidebar: () => set((state) => ({ 
+        isSidebarCollapsed: !state.isSidebarCollapsed 
+      })),
       
       setSearchQuery: (query) => set({ 
         searchQuery: query,
@@ -122,6 +129,7 @@ export const useStore = create(
       partialize: (state) => ({
         isPanelOpen: state.isPanelOpen,
         panelPosition: state.panelPosition,
+        isSidebarCollapsed: state.isSidebarCollapsed,
         settings: state.settings,
         isDemoMode: state.isDemoMode,
       }),
@@ -217,6 +225,131 @@ export const useWordPressStore = create((set, get) => ({
 }));
 
 /**
+ * Block management store for Gutenberg integration
+ * Manages block selection, manipulation, and the window.block API
+ */
+export const useBlockStore = create((set, get) => ({
+  // Block state
+  lastSelectedBlock: null,
+  blocks: [],
+  
+  // Actions
+  setLastSelectedBlock: (block) => set({ lastSelectedBlock: block }),
+  
+  clearSelection: () => set({ lastSelectedBlock: null }),
+  
+  addBlock: (blockMarkup) => set((state) => ({
+    blocks: [...state.blocks, { 
+      id: Date.now().toString(),
+      type: blockMarkup.type || 'section',
+      content: blockMarkup.content || '',
+      attributes: blockMarkup.attributes || {},
+      markup: blockMarkup,
+      ...blockMarkup
+    }]
+  })),
+  
+  removeBlock: (blockMarkup) => {
+    const blockId = typeof blockMarkup === 'string' ? blockMarkup : blockMarkup.id;
+    set((state) => ({
+      blocks: state.blocks.filter(block => block.id !== blockId),
+      lastSelectedBlock: state.lastSelectedBlock?.id === blockId ? null : state.lastSelectedBlock
+    }));
+  },
+  
+  updateBlock: (currentBlock, blockMarkup) => {
+    const blockId = typeof currentBlock === 'string' ? currentBlock : currentBlock.id;
+    set((state) => ({
+      blocks: state.blocks.map(block => 
+        block.id === blockId 
+          ? { ...block, ...blockMarkup, markup: blockMarkup }
+          : block
+      ),
+      lastSelectedBlock: state.lastSelectedBlock?.id === blockId 
+        ? { ...state.lastSelectedBlock, ...blockMarkup, markup: blockMarkup }
+        : state.lastSelectedBlock
+    }));
+  },
+  
+  swapBlock: (currentBlock, blockMarkup) => {
+    const blockId = typeof currentBlock === 'string' ? currentBlock : currentBlock.id;
+    set((state) => ({
+      blocks: state.blocks.map(block => 
+        block.id === blockId 
+          ? { 
+              ...block, 
+              id: blockMarkup.id || block.id,
+              type: blockMarkup.type || block.type,
+              content: blockMarkup.content || block.content,
+              attributes: blockMarkup.attributes || block.attributes,
+              markup: blockMarkup,
+              ...blockMarkup
+            }
+          : block
+      ),
+      lastSelectedBlock: state.lastSelectedBlock?.id === blockId 
+        ? { 
+            ...state.lastSelectedBlock,
+            id: blockMarkup.id || state.lastSelectedBlock.id,
+            type: blockMarkup.type || state.lastSelectedBlock.type,
+            content: blockMarkup.content || state.lastSelectedBlock.content,
+            attributes: blockMarkup.attributes || state.lastSelectedBlock.attributes,
+            markup: blockMarkup,
+            ...blockMarkup
+          }
+        : state.lastSelectedBlock
+    }));
+  },
+  
+  getBlockById: (blockId) => {
+    const { blocks } = get();
+    return blocks.find(block => block.id === blockId);
+  },
+  
+  getBlocksByType: (type) => {
+    const { blocks } = get();
+    return blocks.filter(block => block.type === type);
+  }
+}));
+
+/**
+ * Initialize window.block API for global access
+ */
+if (typeof window !== 'undefined') {
+  window.block = {
+    // Get current selected block
+    getSelected: () => useBlockStore.getState().lastSelectedBlock,
+    
+    // Clear selection
+    clearSelection: () => useBlockStore.getState().clearSelection(),
+    
+    // Add a new block
+    add: (blockMarkup) => useBlockStore.getState().addBlock(blockMarkup),
+    
+    // Remove a block
+    remove: (blockMarkup) => useBlockStore.getState().removeBlock(blockMarkup),
+    
+    // Update a block
+    update: (currentBlock, blockMarkup) => useBlockStore.getState().updateBlock(currentBlock, blockMarkup),
+    
+    // Swap/replace current block with new markup
+    swap: (currentBlock, blockMarkup) => useBlockStore.getState().swapBlock(currentBlock, blockMarkup),
+    
+    // Get block by ID
+    get: (blockId) => useBlockStore.getState().getBlockById(blockId),
+    
+    // Get blocks by type
+    getByType: (type) => useBlockStore.getState().getBlocksByType(type),
+    
+    // Get all blocks
+    getAll: () => useBlockStore.getState().blocks,
+    
+    // Direct access to store
+    store: useBlockStore
+  };
+}
+
+/**
  * Custom hook for easy access to common store actions
  */
 export const useStoreActions = () => {
@@ -225,6 +358,7 @@ export const useStoreActions = () => {
     togglePanel: store.togglePanel,
     openPanel: store.openPanel,
     closePanel: store.closePanel,
+    toggleSidebar: store.toggleSidebar,
     updateSetting: store.updateSetting,
     setSearchQuery: store.setSearchQuery,
   };
@@ -240,5 +374,22 @@ export const useWordPressActions = () => {
     makeApiCall: store.makeApiCall,
     setError: store.setError,
     clearError: store.clearError,
+  };
+};
+
+/**
+ * Custom hook for easy access to block store actions
+ */
+export const useBlockActions = () => {
+  const store = useBlockStore();
+  return {
+    setLastSelectedBlock: store.setLastSelectedBlock,
+    clearSelection: store.clearSelection,
+    addBlock: store.addBlock,
+    removeBlock: store.removeBlock,
+    updateBlock: store.updateBlock,
+    swapBlock: store.swapBlock,
+    getBlockById: store.getBlockById,
+    getBlocksByType: store.getBlocksByType,
   };
 };

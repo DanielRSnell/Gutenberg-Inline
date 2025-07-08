@@ -24608,6 +24608,8 @@
         isPanelOpen: false,
         panelPosition: "right",
         // 'left', 'right', 'center'
+        // Sidebar state
+        isSidebarCollapsed: true,
         // Search and command state
         searchQuery: "",
         selectedCommandIndex: 0,
@@ -24630,6 +24632,9 @@
         openPanel: () => set({ isPanelOpen: true }),
         closePanel: () => set({ isPanelOpen: false }),
         setPanelPosition: (position) => set({ panelPosition: position }),
+        toggleSidebar: () => set((state) => ({
+          isSidebarCollapsed: !state.isSidebarCollapsed
+        })),
         setSearchQuery: (query) => set({
           searchQuery: query,
           selectedCommandIndex: 0
@@ -24703,6 +24708,7 @@
         partialize: (state) => ({
           isPanelOpen: state.isPanelOpen,
           panelPosition: state.panelPosition,
+          isSidebarCollapsed: state.isSidebarCollapsed,
           settings: state.settings,
           isDemoMode: state.isDemoMode
         }),
@@ -24775,6 +24781,106 @@
       }
     }
   }));
+  const useBlockStore = create((set, get) => ({
+    // Block state
+    lastSelectedBlock: null,
+    blocks: [],
+    // Actions
+    setLastSelectedBlock: (block) => set({ lastSelectedBlock: block }),
+    clearSelection: () => set({ lastSelectedBlock: null }),
+    addBlock: (blockMarkup) => set((state) => ({
+      blocks: [...state.blocks, {
+        id: Date.now().toString(),
+        type: blockMarkup.type || "section",
+        content: blockMarkup.content || "",
+        attributes: blockMarkup.attributes || {},
+        markup: blockMarkup,
+        ...blockMarkup
+      }]
+    })),
+    removeBlock: (blockMarkup) => {
+      const blockId = typeof blockMarkup === "string" ? blockMarkup : blockMarkup.id;
+      set((state) => {
+        var _a;
+        return {
+          blocks: state.blocks.filter((block) => block.id !== blockId),
+          lastSelectedBlock: ((_a = state.lastSelectedBlock) == null ? void 0 : _a.id) === blockId ? null : state.lastSelectedBlock
+        };
+      });
+    },
+    updateBlock: (currentBlock, blockMarkup) => {
+      const blockId = typeof currentBlock === "string" ? currentBlock : currentBlock.id;
+      set((state) => {
+        var _a;
+        return {
+          blocks: state.blocks.map(
+            (block) => block.id === blockId ? { ...block, ...blockMarkup, markup: blockMarkup } : block
+          ),
+          lastSelectedBlock: ((_a = state.lastSelectedBlock) == null ? void 0 : _a.id) === blockId ? { ...state.lastSelectedBlock, ...blockMarkup, markup: blockMarkup } : state.lastSelectedBlock
+        };
+      });
+    },
+    swapBlock: (currentBlock, blockMarkup) => {
+      const blockId = typeof currentBlock === "string" ? currentBlock : currentBlock.id;
+      set((state) => {
+        var _a;
+        return {
+          blocks: state.blocks.map(
+            (block) => block.id === blockId ? {
+              ...block,
+              id: blockMarkup.id || block.id,
+              type: blockMarkup.type || block.type,
+              content: blockMarkup.content || block.content,
+              attributes: blockMarkup.attributes || block.attributes,
+              markup: blockMarkup,
+              ...blockMarkup
+            } : block
+          ),
+          lastSelectedBlock: ((_a = state.lastSelectedBlock) == null ? void 0 : _a.id) === blockId ? {
+            ...state.lastSelectedBlock,
+            id: blockMarkup.id || state.lastSelectedBlock.id,
+            type: blockMarkup.type || state.lastSelectedBlock.type,
+            content: blockMarkup.content || state.lastSelectedBlock.content,
+            attributes: blockMarkup.attributes || state.lastSelectedBlock.attributes,
+            markup: blockMarkup,
+            ...blockMarkup
+          } : state.lastSelectedBlock
+        };
+      });
+    },
+    getBlockById: (blockId) => {
+      const { blocks } = get();
+      return blocks.find((block) => block.id === blockId);
+    },
+    getBlocksByType: (type) => {
+      const { blocks } = get();
+      return blocks.filter((block) => block.type === type);
+    }
+  }));
+  if (typeof window !== "undefined") {
+    window.block = {
+      // Get current selected block
+      getSelected: () => useBlockStore.getState().lastSelectedBlock,
+      // Clear selection
+      clearSelection: () => useBlockStore.getState().clearSelection(),
+      // Add a new block
+      add: (blockMarkup) => useBlockStore.getState().addBlock(blockMarkup),
+      // Remove a block
+      remove: (blockMarkup) => useBlockStore.getState().removeBlock(blockMarkup),
+      // Update a block
+      update: (currentBlock, blockMarkup) => useBlockStore.getState().updateBlock(currentBlock, blockMarkup),
+      // Swap/replace current block with new markup
+      swap: (currentBlock, blockMarkup) => useBlockStore.getState().swapBlock(currentBlock, blockMarkup),
+      // Get block by ID
+      get: (blockId) => useBlockStore.getState().getBlockById(blockId),
+      // Get blocks by type
+      getByType: (type) => useBlockStore.getState().getBlocksByType(type),
+      // Get all blocks
+      getAll: () => useBlockStore.getState().blocks,
+      // Direct access to store
+      store: useBlockStore
+    };
+  }
   const LayoutGroupContext = reactExports.createContext({});
   function useConstant(init) {
     const ref = reactExports.useRef(null);

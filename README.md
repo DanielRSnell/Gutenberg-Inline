@@ -1,6 +1,6 @@
-# Plugin Boilerplate - WordPress React Shadow DOM
+# Gutenberg Inline - WordPress React Shadow DOM
 
-A modern WordPress plugin boilerplate featuring React Shadow DOM architecture with complete ShadCN design system. Perfect starting point for building sophisticated WordPress plugins with isolated UI components.
+A modern WordPress plugin for inline Gutenberg block editing with React Shadow DOM architecture and complete ShadCN design system. Perfect for building sophisticated WordPress plugins with isolated UI components.
 
 ## ✨ Features
 
@@ -18,8 +18,8 @@ A modern WordPress plugin boilerplate featuring React Shadow DOM architecture wi
 ## 🚀 Quick Start
 
 ```bash
-# 1. Copy the boilerplate
-cp -r plugin-boilerplate your-plugin-name
+# 1. Copy the plugin
+cp -r gutenberg-inline your-plugin-name
 cd your-plugin-name
 
 # 2. Install dependencies
@@ -34,7 +34,7 @@ npm run build
 ## 🏗️ Complete File Structure
 
 ```
-plugin-boilerplate/
+gutenberg-inline/
 ├── src/                           # React source files
 │   ├── main.jsx                   # Custom HTMLElement web component
 │   ├── ShadowApp.jsx              # Main React app with CSS injection
@@ -67,7 +67,7 @@ plugin-boilerplate/
 │   ├── integration-tests.js       # WordPress integration tests
 │   ├── run-all-tests.js           # Master test runner
 │   └── README.md                  # Testing documentation
-├── shadow-plugin.php              # Main WordPress plugin file
+├── gutenberg-inline.php           # Main WordPress plugin file
 ├── vite.config.js                 # Main Vite configuration (IIFE)
 ├── vite.config.css.js             # CSS-only Vite configuration
 ├── build-css.js                   # Tailwind build script
@@ -887,4 +887,4 @@ GPL v2 or later - Perfect for WordPress plugins
 
 **🚀 Ready to build something amazing?**
 
-This boilerplate gives you everything you need in just 7 files. The demo shows it works - now make it yours!
+This plugin gives you everything you need for inline Gutenberg block editing. The demo shows it works - now make it yours!

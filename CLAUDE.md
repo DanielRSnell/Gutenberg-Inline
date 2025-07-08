@@ -4,18 +4,26 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a WordPress plugin boilerplate that demonstrates modern React Shadow DOM architecture with a complete ShadCN design system. The plugin creates web components using React that render in Shadow DOM to prevent WordPress style conflicts.
+This is Gutenberg Inline, a modern WordPress plugin for inline Gutenberg block editing with React Shadow DOM architecture and complete ShadCN design system. The plugin creates web components using React that render in Shadow DOM to prevent WordPress style conflicts.
 
 ## Key Architecture
 
-### React to Web Component System
-- **Entry Point**: `src/main.jsx` - Custom HTMLElement class `PluginBoilerplateElement` that creates shadow DOM and renders React
-- **Main Component**: `src/ShadowApp.jsx` - Root React component that receives server-side props and injects CSS
+### Dual Web Component System
+- **Main Plugin**: `src/main.jsx` - `PluginBoilerplateElement` custom element for general WordPress pages
+- **Gutenberg Manager**: `src/gutenberg-main.jsx` - `gutenberg-inline-manager` custom element for block editor integration
+- **Shadow DOM Isolation**: Both components use Shadow DOM for complete style isolation
 - **Design System**: `src/styles/main.css` - Tailwind CSS 4 with ShadCN design tokens using `@theme` directive
-- **Web Component**: Registered as `<plugin-boilerplate>` custom element
+
+### Gutenberg Integration Architecture
+- **Entry Point**: `src/gutenberg-main.jsx` - Auto-injects into Gutenberg editor interface 
+- **Main Component**: `src/GutenbergApp.jsx` - Root component for block editor features
+- **Layout Manager**: `src/components/GutenbergLayout.jsx` - Collapsible sidebar with element insertion tools
+- **Block Management**: `src/storage/store.js` - Block state management with `useBlockStore`
+- **Element Generation**: `src/utils/elementBlockGenerator.js` - Converts HTML to WordPress blocks via API
+- **Width Control**: Global functions in `src/utils/blockAPI.js` for web component sizing
 
 ### Server-Side Integration
-- **WordPress Plugin**: `shadow-plugin.php` - Singleton plugin class with hooks, REST API, and CSS injection
+- **WordPress Plugin**: `gutenberg-inline.php` - Singleton plugin class with hooks, REST API, and CSS injection
 - **Props System**: Server data passed via base64-encoded attributes (non-escaped to prevent CSS corruption)
 - **CSS Injection**: Tailwind CSS served server-side and injected into shadow DOM via `<style>` tags
 - **REST API**: WordPress REST endpoints at `/wp-json/shadow-plugin/v1/`
@@ -32,8 +40,17 @@ npm run build
 # Build only Tailwind CSS (outputs to dist/css/main.css)
 npm run build:css
 
+# Build Gutenberg components (outputs to dist/js/gutenberg-inline-manager.js)
+npm run build:gutenberg
+
 # Build and watch for changes
 npm run build:watch
+
+# Build and watch Gutenberg components
+npm run build:watch:gutenberg
+
+# Development server for Gutenberg components
+npm run dev:gutenberg
 
 # Preview production build
 npm run preview
@@ -47,9 +64,15 @@ npm run test:integration  # Integration tests only
 
 ## Build Configuration
 
-- **Vite**: Dual configuration - main build for JS (IIFE format) and CSS-only build via `vite.config.css.js`
+- **Vite**: Triple configuration - main build, CSS-only build, and Gutenberg build
+  - `vite.config.js` - Main plugin build (IIFE format)
+  - `vite.config.css.js` - CSS-only build for Tailwind compilation
+  - `vite.config.gutenberg.js` - Gutenberg inline manager build
 - **CSS Build**: Tailwind CSS 4 with `@tailwindcss/vite` plugin, uses `@source` directives to scan JSX files
-- **Output**: `dist/js/shadow-plugin.js` (1.4MB) and `dist/css/main.css` (30KB+ with ShadCN design system)
+- **Output**: 
+  - `dist/js/shadow-plugin.js` (1.4MB) - Main plugin bundle
+  - `dist/js/gutenberg-inline-manager.js` (3.2MB) - Gutenberg integration bundle
+  - `dist/css/main.css` (50KB+ with ShadCN design system)
 - **React**: Uses React 18, renders directly into `shadowRoot` for proper isolation
 - **Bundling**: All dependencies bundled, no external dependencies required
 
@@ -57,15 +80,17 @@ npm run test:integration  # Integration tests only
 
 ### UI Framework
 - **React 18**: Core framework with hooks and concurrent features
-- **Radix UI**: Headless UI components (Dialog, Tabs, Switch, Label, Dropdown Menu)
-- **Framer Motion**: Animation library for smooth transitions
+- **Radix UI**: Headless UI components (Dialog, Tabs, Switch, Label, Dropdown Menu, Tooltip, Collapsible)
+- **Framer Motion**: Animation library for smooth transitions and sidebar animations
 - **Tailwind CSS 4**: Utility-first CSS with `@theme` directive for ShadCN design tokens
 - **Zustand**: Lightweight state management with localStorage persistence
+- **Ace Editor**: Code editor with Emmet support for HTML editing
 
 ### WordPress Integration
-- **Custom Web Component**: Hand-coded HTMLElement class (no @r2wc dependency)
+- **Custom Web Components**: Hand-coded HTMLElement classes and @r2wc/react-to-web-component
 - **Shadow DOM**: Complete style isolation with server-side CSS injection
 - **Base64 CSS Transport**: CSS encoded and passed via attributes to prevent escaping issues
+- **Block Editor Integration**: Direct injection into Gutenberg with element insertion tools
 
 ## Code Patterns
 
@@ -133,12 +158,13 @@ tailwind-css="<?php echo base64_encode($tailwind_css); ?>"
 ### State Management with Zustand
 ```jsx
 // Import store hooks
-import { useStore, useWordPressStore } from './storage/store.js';
+import { useStore, useWordPressStore, useBlockStore } from './storage/store.js';
 
 // Use in components
 function MyComponent() {
-  const { isPanelOpen, togglePanel, settings } = useStore();
+  const { isPanelOpen, togglePanel, settings, isSidebarCollapsed } = useStore();
   const { serverData, makeApiCall } = useWordPressStore();
+  const { lastSelectedBlock, updateBlock } = useBlockStore();
   
   return (
     <div className="p-4 bg-muted rounded-lg border border-border">
@@ -148,6 +174,52 @@ function MyComponent() {
       >
         Toggle Panel
       </button>
+      {lastSelectedBlock && (
+        <div className="mt-2 text-sm text-muted-foreground">
+          Block: {lastSelectedBlock.type}
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+### Gutenberg Block Management
+```jsx
+// Block store for Gutenberg integration
+import { useBlockStore } from './storage/store.js';
+
+function BlockEditor() {
+  const { lastSelectedBlock, updateBlock, clearSelection } = useBlockStore();
+
+  const handleClassChange = (newClasses) => {
+    if (!lastSelectedBlock) return;
+    
+    const updatedMarkup = {
+      ...lastSelectedBlock.markup,
+      attributes: {
+        ...lastSelectedBlock.attributes,
+        className: newClasses
+      }
+    };
+    
+    updateBlock(lastSelectedBlock, updatedMarkup);
+  };
+
+  return (
+    <div className="p-4">
+      {lastSelectedBlock ? (
+        <div>
+          <h3>Editing: {lastSelectedBlock.type}</h3>
+          <input 
+            value={lastSelectedBlock.attributes?.className || ''}
+            onChange={(e) => handleClassChange(e.target.value)}
+            placeholder="CSS classes"
+          />
+        </div>
+      ) : (
+        <div>No block selected</div>
+      )}
     </div>
   );
 }
@@ -166,24 +238,50 @@ import { TailwindDemo } from './components/TailwindDemo.jsx';
 
 ```
 src/
-├── main.jsx              # Custom HTMLElement web component with shadow DOM
-├── ShadowApp.jsx         # Main app component with CSS injection
-├── ShadowStyles.jsx      # Legacy Raycast design (replaced by Tailwind)
-├── TailwindLoader.jsx    # Legacy API loader (replaced by server-side injection)
-├── components/           # Modular React components
-│   ├── Panel.jsx         # Main panel with keyboard shortcuts
-│   ├── CommandPalette.jsx # Search and command interface
-│   ├── SettingsDialog.jsx # Settings with tabs and form controls
-│   ├── PanelHeader.jsx   # Header with logo and actions
-│   └── TailwindDemo.jsx  # Interactive Tailwind showcase
+├── main.jsx                    # Custom HTMLElement web component with shadow DOM
+├── ShadowApp.jsx               # Main app component with CSS injection
+├── gutenberg-main.jsx          # Gutenberg inline manager web component
+├── GutenbergApp.jsx            # Gutenberg-specific React app
+├── ShadowStyles.jsx            # Legacy Raycast design (replaced by Tailwind)
+├── TailwindLoader.jsx          # Legacy API loader (replaced by server-side injection)
+├── components/                 # Modular React components
+│   ├── Panel.jsx               # Main panel with keyboard shortcuts
+│   ├── CommandPalette.jsx      # Search and command interface
+│   ├── SettingsDialog.jsx      # Settings with tabs and form controls
+│   ├── PanelHeader.jsx         # Header with logo and actions
+│   ├── TailwindDemo.jsx        # Interactive Tailwind showcase
+│   ├── GutenbergLayout.jsx     # Gutenberg sidebar with collapsible animation
+│   ├── BlockEditor.jsx         # Block editor with tabs (Classes, Attributes, Markup)
+│   ├── BlockHeader.jsx         # Block info header with actions
+│   ├── BlockMetadataManager.jsx # Block metadata and HTML conversion
+│   ├── DynamicAttributesManager.jsx # Dynamic attributes editor
+│   ├── BlockMarkup.jsx         # Block markup viewer/editor
+│   └── PlainClasses/           # CSS class management components
+│       ├── PlainClasses.jsx    # Main component with block inserter
+│       ├── BreakpointSelector.jsx # Responsive breakpoint selector
+│       ├── TokenInputSection.jsx # Tailwind class token input
+│       ├── QuickActionButtons.jsx # Quick action buttons for classes
+│       ├── QuickPanelContent.jsx # Quick panel content
+│       └── ColorPanel.jsx      # Color selection panel
 ├── storage/
-│   └── store.js          # Zustand stores with localStorage persistence
+│   └── store.js                # Zustand stores with localStorage persistence
 ├── utils/
-│   ├── constants.js      # App constants and demo data
-│   ├── helpers.js        # Utility functions
-│   └── keyboardShortcuts.js # Keyboard shortcut management
+│   ├── constants.js            # App constants and demo data
+│   ├── helpers.js              # Utility functions
+│   ├── keyboardShortcuts.js    # Keyboard shortcut management
+│   ├── blockAPI.js             # WordPress block API utilities
+│   ├── elementBlockGenerator.js # HTML to WordPress block conversion
+│   └── PlainClasses/           # CSS class utilities
+│       ├── classHelpers.js     # Class manipulation helpers
+│       └── objectHelpers.js    # Object/string handling utilities
+├── hooks/
+│   ├── useElementInsertion.js  # Element insertion hook
+│   ├── useAutocomplete.js      # Tailwind class autocomplete
+│   ├── useColorData.js         # Color system data hook
+│   ├── useLayoutData.js        # Layout/spacing data hook
+│   └── useQuickPanel.js        # Quick panel state hook
 └── styles/
-    └── main.css          # Tailwind 4 with @theme directive and ShadCN tokens
+    └── main.css                # Tailwind 4 with @theme directive and ShadCN tokens
 
 includes/
 └── api/
@@ -198,13 +296,15 @@ tests/                    # Comprehensive test suite
 
 dist/
 ├── js/
-│   └── shadow-plugin.js  # Compiled React bundle (1.4MB)
+│   ├── shadow-plugin.js            # Compiled React bundle (1.4MB)
+│   └── gutenberg-inline-manager.js # Gutenberg integration bundle (3.2MB)
 └── css/
-    └── main.css          # Compiled Tailwind CSS with ShadCN (30KB+)
+    └── main.css                    # Compiled Tailwind CSS with ShadCN (50KB+)
 
-shadow-plugin.php         # WordPress plugin file (singleton class)
+gutenberg-inline.php      # WordPress plugin file (singleton class)
 vite.config.js           # Main Vite configuration (IIFE format)
 vite.config.css.js       # CSS-only Vite configuration  
+vite.config.gutenberg.js # Gutenberg build configuration
 build-css.js             # Tailwind CSS build script using Vite + @tailwindcss/vite
 package.json             # Dependencies and scripts
 ```
@@ -223,6 +323,9 @@ package.json             # Dependencies and scripts
 - **Tailwind CSS 4**: Uses `@theme` directive for custom design tokens
 - **Keyboard Navigation**: Full keyboard support with shortcuts via Framer Motion
 - **Floating Action Button**: Positioned bottom-right with monochromatic styling
+- **Gutenberg Integration**: Collapsible sidebar with element insertion, persistent state via Zustand
+- **Block Management**: Complete block editor with tabbed interface (Classes, Attributes, Markup)
+- **HTML to Block Conversion**: Ace Editor with Emmet support, converts HTML to WordPress blocks via API
 
 ### Shadow DOM Isolation
 - **Complete Isolation**: All styles scoped to Shadow DOM using `:host` selector  
@@ -276,7 +379,7 @@ package.json             # Dependencies and scripts
 7. Rebuild with `npm run build` (includes CSS compilation)
 
 ### Adding Server Data
-1. Modify `addServerDataToPage()` in `shadow-plugin.php`
+1. Modify `addServerDataToPage()` in `gutenberg-inline.php`
 2. Add new prop to `r2wc` configuration in `src/main.jsx`
 3. Use the new prop in `ShadowApp.jsx`
 
@@ -297,6 +400,10 @@ package.json             # Dependencies and scripts
 2. **Use json_encode() for JavaScript attributes** and raw base64 for HTML attributes  
 3. **CSS uses `@source` directives** to scan JSX files for Tailwind classes
 4. **All components must use ShadCN tokens** for consistent design system
+5. **ALWAYS recompile CSS after adding new Tailwind classes** - Run `npm run build:css` whenever you add new arbitrary values, custom classes, or modify the theme configuration
+6. **ALWAYS rebuild both CSS and Gutenberg together** - When working on Gutenberg components, ALWAYS run both `npm run build:css` AND `npm run build:gutenberg` commands together to ensure styles and component are in sync
+7. **Gutenberg web component width control** - Use `window.gbStyleControlManagerWidth(targetWidth)` to control the gutenberg-inline-manager width from outside React
+8. **Emmet in Ace Editor** - All HTML editors have Emmet enabled; use `ace.require("ace/ext/emmet")` and `editor.setOption("enableEmmet", true)` for new instances
 
 ## WordPress Integration Examples
 

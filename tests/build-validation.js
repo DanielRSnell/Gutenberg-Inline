@@ -25,7 +25,7 @@ const TESTS = {
         'React',
         'zustand',
         'customElements.define',
-        'shadow-plugin-panel'
+        'plugin-boilerplate'
       ]
     },
     {
@@ -38,7 +38,7 @@ const TESTS = {
         '.text-',
         '.p-',
         '.rounded',
-        'Tailwind CSS'
+        'tailwindcss'
       ]
     },
     {
@@ -195,7 +195,7 @@ class BuildValidator {
     const content = readFileSync(cssPath, 'utf8');
     
     // Check for Tailwind base styles
-    const hasBase = content.includes('--tw-border-spacing-x') && content.includes('--tw-translate-x');
+    const hasBase = content.includes('--tw-translate-x') && content.includes('tailwindcss');
     
     // Check for utility classes
     const hasUtilities = content.includes('.flex') && content.includes('.bg-') && content.includes('.text-');
@@ -203,7 +203,7 @@ class BuildValidator {
     // Check for responsive modifiers
     const hasResponsive = content.includes('@media') || content.includes('sm:') || content.includes('lg:');
     
-    return hasBase && hasUtilities;
+    return hasBase && hasUtilities && hasResponsive;
   }
 
   validateWordPressIntegration() {

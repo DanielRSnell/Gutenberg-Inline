@@ -22,7 +22,213 @@
   --color-border: oklch(90% 0.006 285.82);
   --color-input: oklch(90% 0.006 285.82);
   --color-ring: oklch(47.31% 0.099 264.05);
+  --color-dark: #1e1e1e;
+  --color-neutral: #f0f0f0;
   
   --radius: 0.5rem;
+  --radius-sm: 0.375rem;
+  --radius-xs: 0.25rem;
+}
+
+/* Token Input Component Styling - ShadCN + Gutenberg Design */
+.token-input-container {
+  @apply relative w-full min-h-[120px] rounded-lg border border-input bg-neutral/20 px-3 py-2.5 text-sm ring-offset-background transition-all duration-200 ease-in-out;
+  @apply focus-within:ring-2 focus-within:ring-neutral focus-within:ring-offset-2;
+  @apply hover:border-border/70;
+}
+
+.token-input-container--errors {
+  @apply border-destructive/50 focus-within:border-destructive focus-within:ring-destructive/20;
+}
+
+.token-input-token-list {
+  @apply flex flex-wrap gap-1.5 mb-2;
+}
+
+.token-input-token {
+  @apply inline-flex items-center justify-between gap-1.5 rounded-md border border-border bg-neutral/90 px-2.5 py-1.5 text-xs font-medium text-foreground transition-all duration-200 ease-in-out;
+  @apply hover:bg-neutral hover:text-foreground;
+}
+
+.token-input-token--editable {
+  @apply cursor-text;
+}
+
+.token-input-token--error {
+  @apply border-destructive/50 bg-destructive/10 text-destructive hover:bg-destructive/20;
+}
+
+.token-input-token__label-wrapper {
+  @apply font-mono text-xs leading-none;
+}
+
+.token-input-token__delete-button {
+  @apply cursor-pointer rounded-sm p-0.5 text-muted-foreground transition-colors duration-200 ease-in-out;
+  @apply hover:bg-destructive hover:text-destructive-foreground;
+  @apply focus:outline-none focus:ring-1 focus:ring-ring focus:ring-offset-1;
+}
+
+.token-input-delete-button__close-icon {
+  @apply h-3 w-3 flex items-center justify-center relative;
+}
+
+.token-input-delete-button__close-icon::before,
+.token-input-delete-button__close-icon::after {
+  content: '';
+  position: absolute;
+  width: 10px;
+  height: 1px;
+  background-color: currentColor;
+  border-radius: 1px;
+}
+
+.token-input-delete-button__close-icon::before {
+  transform: rotate(45deg);
+}
+
+.token-input-delete-button__close-icon::after {
+  transform: rotate(-45deg);
+}
+
+.token-input-autosized-wrapper {
+  @apply flex-1 min-w-0 w-full mt-8;
+  display: flex !important;
+  width: 100% !important;
+}
+
+.token-input-autosized-wrapper > div {
+  display: flex !important;
+  flex: 1 !important;
+  width: 100% !important;
+}
+
+.token-input-autosized-wrapper input {
+  @apply w-full border-2 border-gray-300 bg-white px-3 py-2 text-sm font-mono placeholder:text-muted-foreground rounded-md;
+  @apply focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 focus:bg-white;
+  @apply transition-all duration-200;
+  width: 100% !important;
+  flex: 1 !important;
+}
+
+.token-input-autosized-wrapper input::placeholder {
+  @apply text-muted-foreground/70;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .token-input-container {
+    @apply min-h-[100px] px-2.5 py-2;
+  }
+  
+  .token-input-token {
+    @apply px-2 py-1 text-xs;
+  }
+  
+  .token-input-token__label-wrapper {
+    @apply text-xs;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .token-input-container {
+    @apply border-border/40;
+  }
+  
+  .token-input-token {
+    @apply border-border/40;
+  }
+  
+  .token-input-token--error {
+    @apply border-destructive/40;
+  }
+}
+
+/* Animation for token interactions */
+.token-input-token {
+  animation: token-fade-in 0.2s ease-in-out;
+}
+
+@keyframes token-fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Focus states matching Gutenberg */
+.token-input-container:focus-within {
+  box-shadow: 0 0 0 2px var(--color-ring);
+}
+
+.token-input-token:focus-within {
+  @apply ring-1 ring-ring ring-offset-1 ring-offset-background;
+}
+
+/* Validation error styling */
+.token-input-token--error .token-input-token__label-wrapper {
+  @apply text-destructive;
+}
+
+.token-input-token--error .token-input-token__delete-button {
+  @apply text-destructive/70 hover:text-destructive-foreground;
+}
+
+/* Ensure tokens wrap properly */
+.token-input-token-list {
+  @apply min-h-[28px];
+}
+
+/* Input field styling within tokens */
+.token-input-autosized-wrapper {
+  @apply flex items-center;
+}
+
+.token-input-autosized-wrapper input {
+  @apply min-w-[120px] bg-transparent;
+}
+
+/* Hover states for better UX */
+.token-input-token:hover .token-input-token__delete-button {
+  @apply opacity-100;
+}
+
+.token-input-token .token-input-token__delete-button {
+  @apply opacity-60 transition-opacity duration-200;
+}
+
+/* Accessibility improvements */
+.token-input-token__delete-button:focus {
+  @apply opacity-100 outline-none ring-1 ring-ring ring-offset-1;
+}
+
+/* Container focus state */
+.token-input-container:focus-within .token-input-token {
+  @apply border-border/60;
+}
+
+/* Prevent layout shift */
+.token-input-container {
+  @apply min-h-[120px];
+}
+
+.token-input-token-list:empty + .token-input-autosized-wrapper {
+  @apply mt-0;
+}
+
+/* Typography consistency */
+.token-input-container,
+.token-input-container input,
+.token-input-token {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+/* Color swatch text shadow for better readability */
+.text-shadow-sm {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
